@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PepeCodes | Backend Sorcery</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --terminal-bg: #161b22;
+            --primary-green: #00ff41; /* Classic Matrix/Terminal Green */
+            --light-green: #4ade80;
+            --text-white: #e6edf3;
+            --border-color: #30363d;
+            --header-bg: #21262d;
+            --deep-bg: #0d1117;
+            --comment-color: #8b949e;
+            --string-color: #a5d6ff;
+            --function-color: #d2a8ff;
+            --content-color: #c9d1d9;
+        }
+
+        html[data-theme="light"] {
+            --bg-color: #f6f8fa;
+            --terminal-bg: #ffffff;
+            --primary-green: #116329;
+            --light-green: #1a7f37;
+            --text-white: #24292f;
+            --border-color: #d0d7de;
+            --header-bg: #f6f8fa;
+            --deep-bg: #eaeef2;
+            --comment-color: #6e7781;
+            --string-color: #0550ae;
+            --function-color: #8250df;
+            --content-color: #57606a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--terminal-bg);
+            box-shadow: 0 20px 50px rgba(0, 255, 65, 0.1);
+            overflow: hidden;
+        }
+
+        /* Terminal Header */
+        .terminal-header {
+            background: var(--header-bg);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .red { background: #ff5f56; }
+        .yellow { background: #ffbd2e; }
+        .green { background: #27c93f; }
+
+        .title {
+            margin-left: 20px;
+            font-size: 0.8rem;
+            color: var(--comment-color);
+        }
+
+        /* Terminal Body */
+        .terminal-body {
+            padding: 30px;
+        }
+
+        .code-line {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .comment { color: var(--comment-color); }
+        .keyword { color: var(--primary-green); }
+        .string { color: var(--string-color); }
+        .function { color: var(--function-color); }
+
+        h1 {
+            color: var(--primary-green);
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .prompt::before {
+            content: "pepe@backend:~$ ";
+            color: var(--primary-green);
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background: var(--primary-green);
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        /* Grid for Stack */
+        .stack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stack-item {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: center;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+
+        .stack-item:hover {
+            border-color: var(--primary-green);
+            background: rgba(0, 255, 65, 0.05);
+            transform: translateY(-3px);
+        }
+
+        /* Contact Section */
+        .contact-json {
+            margin-top: 40px;
+            background: var(--deep-bg);
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        a {
+            color: var(--primary-green);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-underline-offset: 4px;
+            text-decoration: underline;
+        }
+
+        .btn-debug {
+            margin-top: 20px;
+            background: transparent;
+            border: 1px solid var(--primary-green);
+            color: var(--primary-green);
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-debug:hover {
+            background: var(--primary-green);
+            color: var(--bg-color);
+        }
+
+        body, .container, .terminal-header, .contact-json, .stack-item {
+            transition: background-color 0.25s, border-color 0.25s, color 0.25s;
+        }
+
+        .btn-theme {
+            margin-left: auto;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--comment-color);
+            padding: 2px 8px;
+            cursor: pointer;
+            font-size: 0.72rem;
+            border-radius: 3px;
+            font-family: inherit;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .btn-theme:hover {
+            border-color: var(--primary-green);
+            color: var(--primary-green);
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+        }
+    </style>
+    <script>
+        (function() {
+            const t = localStorage.getItem('theme');
+            if (t) document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+</head>
+<body>
+
+<div class="container">
+    <div class="terminal-header">
+        <div class="buttons">
+            <div class="dot red"></div>
+            <div class="dot yellow"></div>
+            <div class="dot green"></div>
+        </div>
+        <div class="title">bash — PepeCodes — 80x24</div>
+        <button class="btn-theme" onclick="toggleTheme()">[ ☀ ]</button>
+    </div>
+
+    <div class="terminal-body">
+        <div class="code-line">
+            <span class="comment"># Deploying high-quality spaghetti since inception</span>
+        </div>
+        
+        <div class="prompt"><span>whoami</span></div>
+        <h1>PepeCodes</h1>
+
+        <p class="code-line">
+            <span class="keyword">class</span> <span class="function">BackendDev</span>:
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;bio = <span class="string">"I turn coffee into scalable JSON"</span>
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;status = <span class="string">"Avoiding CSS since 2015"</span>
+        </p>
+
+        <div class="code-line" style="margin-top: 30px;">
+            <span class="prompt">ls --skills ./stack</span>
+        </div>
+
+        <div class="stack-grid">
+            <div class="stack-item">Django</div>
+            <div class="stack-item">FastAPI</div>
+            <div class="stack-item">DRF</div>
+            <div class="stack-item">PostgreSQL</div>
+            <div class="stack-item">Docker</div>
+            <div class="stack-item">REST API</div>
+            <div class="stack-item">CI/CD</div>
+            <div class="stack-item">Cloud Infrastructure</div>
+
+        </div>
+
+        <div class="contact-json">
+<pre>
+{
+  <span class="string">"company"</span>: <span class="string">"PepeCodes"</span>,
+  <span class="string">"specialty"</span>: <span class="string">"Python Backend Services"</span>,
+  <span class="string">"mission"</span>: <span class="string">"Fixing 'this should work' bugs"</span>,
+  <span class="string">"contact"</span>: {
+    <span class="string">"email"</span>: <span class="string">"hi@pepecodes.com"</span>,
+  }
+}
+</pre>
+        </div>
+
+        <button class="btn-debug" onclick="runDebug()">[ SEARCH FOR BUGS ]</button>
+        <p id="debug-output" style="margin-top: 15px; font-size: 0.8rem; min-height: 20px;"></p>
+
+        <div class="code-line" style="margin-top: 20px;">
+            <span class="prompt"></span><span class="cursor"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleTheme() {
+        const html = document.documentElement;
+        const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        updateThemeBtn();
+    }
+
+    function updateThemeBtn() {
+        const btn = document.querySelector('.btn-theme');
+        if (btn) btn.textContent = document.documentElement.getAttribute('data-theme') === 'light' ? '[ ☾ ]' : '[ ☀ ]';
+    }
+
+    updateThemeBtn();
+
+    const debugMessages = [
+        "Scanning for semicolons... None found. Good.",
+        "Refactoring code... Added 5 more bugs.",
+        "Django is warming up... It's heavy, give it a second.",
+        "FastAPI is running... Too fast, I missed it.",
+        "PostgreSQL: 'I'm not slow, your query is.'",
+        "Error 418: I'm a teapot.",
+        "Production is on fire. This is fine.",
+        "Debugging complete. No issues found. (Lies, there are always issues.)",
+        "Running 'print(\"Hello World\")'... Output: Hello World. Still no bugs, must be a miracle.",
+        "git push origin master... always with --force, because why not?",
+        "Works on my side. (Famous last words.)",
+        "Stack overflow says: 'This question has already been asked.' Yes, but not with my code.",
+        "Running unit tests... 0% passed. Time to panic.",
+        "Code review feedback: 'Looks good to me.' (Translation: I have no idea what's going on.)",
+        "Developing in production... Hold my beer.",
+        "Debugging in production... Everything is on fire.",
+        "Adding more logging... Now we have 1000 log lines for a simple request.",
+        "Refactoring code... Now it's unrecognizable and just as buggy.",
+        "sudo rm -rf / --no-preserve-root... Just kidding, don't do that. Or do, if you want to live on the edge.",
+        "Debugging complete. No bugs found. (Sure, let's go with that.)",
+        "Python: 'IndentationError: unexpected indent'... Because tabs and spaces are mortal enemies.",
+        "Python: 'SyntaxError: invalid syntax'... Because I forgot a colon. Classic.",
+        "Python: 'NameError: name 'x' is not defined'... Because I forgot to define x. Oops.",
+        "Edit code on production... What could possibly go wrong?",
+        "Debugging with print statements... The oldest trick in the book.",
+        "Debugging with a debugger... Too fancy, I prefer the old-school way.",
+        "Debugging with rubber duck... The duck is silent, but it listens.",
+        "Debugging with a colleague... 'Have you tried turning it off and on again?'",
+        "Debugging with Stack Overflow... 'This question has already been asked'",
+        "git commit -m 'Fixed a bug'... But did I really fix it? Only time will tell.",
+        "git push origin master... Because we don't do feature branches here.",
+        "error 500: Internal Server Error... Because something went terribly wrong, but we have no idea what.",
+        "Done when ready... But when is that? Time is a flat circle in software development.",
+        "PEP 8: 'Code should be readable and consistent'... But my code is a beautiful mess.",
+        "PEP 320: 'The Zen of Python'... Beautiful is better than ugly, but my code is both.",
+        "Sebastian told me to not use signals in Django... But I did it anyway",
+        "Serverless means everything works on server somewhere else, right? Right?",
+        "Microservices: 'It's like a monolith, but with more network calls and latency.'",
+        "Monolith: 'It's like a microservice, but with less network calls and more spaghetti code.'",
+        "Debugging in production: 'It's like regular debugging, but with more panic and less sleep.'",
+
+
+
+    ];
+
+    let debugTimer = null;
+
+    function runDebug() {
+        const output = document.getElementById('debug-output');
+        const randomMsg = debugMessages[Math.floor(Math.random() * debugMessages.length)];
+        
+        output.style.color = "#4ade80";
+        output.innerText = "> " + randomMsg;
+        
+        clearTimeout(debugTimer);
+        debugTimer = setTimeout(() => {
+            output.innerText = "";
+        }, 5000);
+    }
+</script>
+
+</body>
+</html>
